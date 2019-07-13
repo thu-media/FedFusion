@@ -28,7 +28,6 @@ class Trainer(ABC):
         self.local_epochs = global_args.local_epochs
         self.rounds = global_args.rounds
         self.fusion = global_args.fusion
-        self.policy = global_args.policy
         self.meta_lr = global_args.meta_lr
         self.resume = global_args.resume
 
@@ -51,9 +50,6 @@ class Trainer(ABC):
     def train_local(self, net, rnd):
         # train
         print(f"=> Train begins: Round {rnd}")
-        # start = random.randint(0, 10)
-        # net.subset = (tuple(range(10)) * 2)[start:start + 5]
-        # net.load_data()
         for _ in range(self.local_epochs):
             net.train()
         print(f"=> Test begins: Round {rnd}")
@@ -61,47 +57,14 @@ class Trainer(ABC):
         self.q.put((test_acc, test_loss))
 
     def model_aggregation(self):
-        if self.policy == 'average':
-            # compute average of models
-            dict_new = collections.defaultdict(list)
-            for net in self.nets_pool[:self.num_per_rnd]:
-                for k, v in net.model.state_dict().items():
-                    dict_new[k].append(v)
-            for k in dict_new.keys():
-                dict_new[k] = torch.mean(torch.stack(dict_new[k]), dim=0)
-            return dict_new
-        elif self.policy == 'adam':
-            local_grads = collections.defaultdict(list)
-            global_dict = self.global_agent.model.state_dict()
-            for net in self.nets_pool[:self.num_per_rnd]:
-                for k, v in net.model.state_dict().items():
-                    local_grads[k].append(v)
-
-            beta1, beta2, eps = 0.9, 0.999, 1e-8
-            for k, v in global_dict.items():
-                grad = v - torch.mean(torch.stack(local_grads[k]), dim=0)
-                state = self.global_agent.adam_state[k]
-                if not state:
-                    state['step'] = 0
-                    # Exponential moving average of gradient values
-                    state['exp_avg'] = torch.zeros_like(grad)
-                    # Exponential moving average of squared gradient values
-                    state['exp_avg_sq'] = torch.zeros_like(grad)
-                exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
-                state['step'] += 1
-                # Decay the first and second moment running average coefficient
-                exp_avg.mul_(beta1).add_(1 - beta1, grad)
-                exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
-                denom = exp_avg_sq.sqrt().add_(eps)
-
-                bias_correction1 = 1 - beta1 ** state['step']
-                bias_correction2 = 1 - beta2 ** state['step']
-                step_size = self.meta_lr * math.sqrt(bias_correction2) / bias_correction1
-
-                v.addcdiv_(-step_size, exp_avg, denom)
-            return global_dict
-        else:
-            raise ValueError('Invalid model aggregation policy.')
+        # compute average of models
+        dict_new = collections.defaultdict(list)
+        for net in self.nets_pool[:self.num_per_rnd]:
+            for k, v in net.model.state_dict().items():
+                dict_new[k].append(v)
+        for k in dict_new.keys():
+            dict_new[k] = torch.mean(torch.stack(dict_new[k]), dim=0)
+        return dict_new
 
     def update_global(self, rnd):
         dict_new = self.model_aggregation()

@@ -64,8 +64,6 @@ class CIFARTrainer(Trainer):
 
     def build_local_models(self, global_args):
         self.nets_pool = list()
-        # self.nets_pool.append(CIFARAgent(global_args, fine=self.fine))
-        # self.nets_pool.append(CIFARAgent(global_args, fine=self.fine))
         train_indices = np.random.permutation(50000)
         test_indices = np.random.permutation(10000)
         train_per_local = len(train_indices) // self.num_locals
@@ -78,8 +76,6 @@ class CIFARTrainer(Trainer):
         self.init_local_models()
 
     def train(self):
-        # self.num_per_rnd = int(0.2 * args.num_locals)
-        # mp.set_start_method('spawn')
         ctx = mp.get_context('forkserver')
         self.num_per_rnd = 5
         for rnd in range(self.rounds):
@@ -87,8 +83,6 @@ class CIFARTrainer(Trainer):
             pool = ctx.Pool(self.num_per_rnd)
             self.q = ctx.Manager().Queue()
             pool.starmap(train_local_mp, [(self.local_epochs, net, rnd, self.q) for net in self.nets_pool[:self.num_per_rnd]])
-            # for net in nets_pool[:self.num_per_rnd]:
-            #     train_local(net, rnd, args.local_epochs)
             pool.close()
             pool.join()
             self.update_global(rnd)
@@ -112,7 +106,6 @@ def main():
     cifar_trainer.build_local_models(args)
     cifar_trainer.train()
 
-    # cifar_trainer.writer.export_scalars_to_json(os.path.join(writer_dir, 'scalars.json'))
     cifar_trainer.writer.close()
 
 if __name__ == '__main__':
@@ -142,13 +135,6 @@ if __name__ == '__main__':
         default='none',
         choices=('none', 'multi', 'single', 'conv'),
         help='Method for feature fusion.'
-    )
-    parser.add_argument(
-        '--policy',
-        type=str,
-        default='average',
-        choices=('average', 'adam'),
-        help='Policy for model aggregation.'
     )
     parser.add_argument(
         '--num_workers',

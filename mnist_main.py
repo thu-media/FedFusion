@@ -91,7 +91,6 @@ def main():
         return
 
     writer_dir = os.path.join(f'runs/{args.fine}_{args.fusion}_{args.num_locals}',
-    # writer_dir = os.path.join(f'runs/Fashion_evenodd_{args.fusion}_{args.num_locals}',
                               datetime.datetime.now().strftime('%b%d_%H-%M'))
     mnist_trainer.writer = SummaryWriter(writer_dir)
 
@@ -127,13 +126,6 @@ if __name__ == '__main__':
         default='none',
         choices=('none', 'multi', 'single', 'conv'),
         help='Method for feature fusion.'
-    )
-    parser.add_argument(
-        '--policy',
-        type=str,
-        default='average',
-        choices=('average', 'adam'),
-        help='Policy for model aggregation.'
     )
     parser.add_argument(
         '--num_workers',
