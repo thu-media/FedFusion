@@ -26,3 +26,14 @@ If you find this work useful to you, please cite the full version ([arXiv](https
   Year = {2019}
 }
 ```
+or the conference version ([IEEE](https://ieeexplore.ieee.org/abstract/document/8803001)):
+```
+@inproceedings{yao2019towards,
+  title={Towards Faster and Better Federated Learning: A Feature Fusion Approach},
+  author={Yao, Xin and Huang, Tianchi and Wu, Chenglei and Zhang, Rui-Xiao and Sun, Lifeng},
+  booktitle={2019 IEEE International Conference on Image Processing (ICIP)},
+  pages={175--179},
+  year={2019},
+  organization={IEEE}
+}
+```
